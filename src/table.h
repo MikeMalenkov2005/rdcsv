@@ -1,15 +1,19 @@
 #ifndef TABLE_H
 #define TABLE_H
 
-int AddColumn(const char *name);
-int GetColumn(const char *name);
+#include <stddef.h>
 
-int AddRow(unsigned index);
-int GetRow(unsigned index);
+int AddColumn(const char *name, size_t length);
+int GetColumn(const char *name, size_t length);
+
+int AddRow(const char *name, size_t length);
+int GetRow(const char *name, size_t length);
 
 int *Cell(unsigned column, unsigned row);
 
 void PrintTable(void);
+
+int InitTable(void);
 void FreeTable(void);
 
 #endif

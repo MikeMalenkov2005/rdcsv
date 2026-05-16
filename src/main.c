@@ -1,3 +1,4 @@
+#include "formula.h"
 #include "table.h"
 
 #include <string.h>
@@ -22,6 +23,39 @@ char *LoadFile(const char *path)
   return data;
 }
 
+int ParseCSV(const char *csv)
+{
+  int *cell;
+  unsigned column, row = 0;
+  size_t len, i = strcspn(csv, ",\n");
+  while (csv[i] == ',')
+  {
+    len = strcspn(csv + ++i, ",\n");
+    if (AddColumn(csv + i, len) < 0) return 0;
+    i += len;
+  }
+  while (csv[i++])
+  {
+    if (AddRow(csv + i, strcspn(csv + i, ",\n")) < 0) return 0;
+    i += strcspn(csv + i, "\n");
+  }
+  if (!InitTable()) return 0;
+  i = strcspn(csv, "\n");
+  while (csv[i++])
+  {
+    column = 0;
+    i += strcspn(csv + i, ",\n");
+    while (csv[i] == ',')
+    {
+      cell = Cell(column++, row);
+      if (csv[++i] == '=') AddFormula(csv + i, cell);
+      else sscanf(csv + i, "%d", cell);
+    }
+    ++row;
+  }
+  return 1;
+}
+
 int main(int argc, char *argv[])
 {
   char *csv;
@@ -35,6 +69,13 @@ int main(int argc, char *argv[])
     fprintf(stderr, "ERROR: Could not load the file!\n");
     return EXIT_FAILURE;
   }
+  if (!ParseCSV(csv))
+  {
+    FreeTable();
+    fprintf(stderr, "ERROR: Failed to parse CSV!\n");
+    return EXIT_FAILURE;
+  }
+  ResolveFormulas();
   PrintTable();
   FreeTable();
   free(csv);

@@ -4,85 +4,106 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+typedef struct _String
+{
+  const char *data;
+  size_t      size;
+} String;
+
+typedef struct _StringVector
+{
+  String    *data;
+  unsigned  count;
+  unsigned  limit;
+} StringVector;
+
 static int *table = NULL;
+static StringVector rows = { 0 };
+static StringVector columns = { 0 };
 
-static unsigned width = 0;
-static unsigned height = 0;
-
-static const char **columns = NULL;
-static unsigned *rows = NULL;
-
-int AddColumn(const char *name)
+static int _Add(StringVector *vector, const char *string, size_t length)
 {
-  const char **new;
-  static unsigned length = 0;
-  if (width == length)
+  String *data;
+  if (length > INT_MAX) return -1; /* If the length is greater printf fails! */
+  if (vector->count == vector->limit)
   {
-    if (!(new = realloc(columns, (length += 32) * sizeof(*columns))))
+    data = realloc(vector->data, vector->limit + 32);
+    if (!data)
     {
-      length -= 32;
+      vector->limit -= 32;
       return -1;
     }
-    columns = new;
+    vector->data = data;
   }
-  columns[width] = name;
-  return width++;
+  vector->data[vector->count].data = string;
+  vector->data[vector->count].size = length;
+  return vector->count++;
 }
 
-int GetColumn(const char *name)
+static int _Get(StringVector *vector, const char *string, size_t length)
 {
-  unsigned i;
-  for (i = 0; i < width; ++i) if (!strcmp(name, columns[i])) return i;
+  unsigned i = vector->count;
+  while (i--)
+  {
+    if (vector->data[i].size == length &&
+        !strncmp(vector->data[i].data, string, length)) return i;
+  }
   return -1;
 }
 
-int AddRow(unsigned index)
+int AddColumn(const char *name, size_t length)
 {
-  unsigned *new;
-  static unsigned length = 0;
-  if (width == length)
-  {
-    if (!(new = realloc(rows, (length += 32) * sizeof(*rows))))
-    {
-      length -= 32;
-      return -1;
-    }
-    rows = new;
-  }
-  rows[width] = index;
-  return width++;
+  return _Add(&columns, name, length);
 }
 
-int GetRow(unsigned index)
+int GetColumn(const char *name, size_t length)
 {
-  unsigned i;
-  for (i = 0; i < height; ++i) if (index == rows[i]) return i;
-  return -1;
+  return _Get(&columns, name, length);
+}
+
+int AddRow(const char *name, size_t length)
+{
+  return _Add(&rows, name, length);
+}
+
+int GetRow(const char *name, size_t length)
+{
+  return _Get(&rows, name, length);
 }
 
 int *Cell(unsigned column, unsigned row)
 {
-  if (column >= width || row >= height) return NULL;
-  return table + column + (size_t)width * row;
+  if (!table || column >= columns.count || row >= rows.count) return NULL;
+  return table + column + (size_t)columns.count * row;
 }
 
 void PrintTable(void)
 {
   unsigned i, j;
-  for (i = 0; i < width; ++i)
+  if (table)
   {
-    printf(",%s", columns[i]);
-  }
-  putchar('\n');
-  for (j = 0; j < height; ++j)
-  {
-    printf("%u", rows[j]);
-    for (i = 0; i < width; ++i)
+    for (i = 0; i < columns.count; ++i)
     {
-      printf(",%d", *Cell(i, j));
+      printf(",%.*s", (int)columns.data[i].size, columns.data[i].data);
     }
     putchar('\n');
+    for (j = 0; j < rows.count; ++j)
+    {
+      printf("%.*s", (int)rows.data[j].size, rows.data[j].data);
+      for (i = 0; i < columns.count; ++i)
+      {
+        printf(",%d", *Cell(i, j));
+      }
+      putchar('\n');
+    }
   }
+}
+
+int InitTable(void)
+{
+  if (table) free(table);
+  table = calloc(rows.count * columns.count, sizeof(*table));
+  return !!table;
 }
 
 void FreeTable(void)
@@ -92,16 +113,15 @@ void FreeTable(void)
     free(table);
     table = NULL;
   }
-  if (columns)
+  if (columns.data)
   {
-    free(columns);
-    columns = NULL;
+    free(columns.data);
+    memset(&columns, 0, sizeof(columns));
   }
-  if (rows)
+  if (rows.data)
   {
-    free(rows);
-    rows = NULL;
+    free(rows.data);
+    memset(&rows, 0, sizeof(rows));
   }
-  width = height = 0;
 }
 
