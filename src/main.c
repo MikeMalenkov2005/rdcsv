@@ -1,7 +1,43 @@
+#include "table.h"
+
+#include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+
+char *LoadFile(const char *path)
+{
+  char *data;
+  size_t length;
+  FILE *file = fopen(path, "r");
+  if (!file) return NULL;
+  fseek(file, 0, SEEK_END);
+  length = ftell(file);
+  fseek(file, 0, SEEK_SET);
+  if ((data = malloc(length + 1)))
+  {
+    fread(data, 1, length, file);
+    data[length] = 0;
+  }
+  fclose(file);
+  return data;
+}
 
 int main(int argc, char *argv[])
 {
-  return 0;
+  char *csv;
+  if (argc != 2)
+  {
+    fprintf(stderr, "ERROR: Invalid number of arguments!\n");
+    return EXIT_FAILURE;
+  }
+  if (!(csv = LoadFile(argv[1])))
+  {
+    fprintf(stderr, "ERROR: Could not load the file!\n");
+    return EXIT_FAILURE;
+  }
+  PrintTable();
+  FreeTable();
+  free(csv);
+  return EXIT_SUCCESS;
 }
 
