@@ -27,7 +27,7 @@ static int _Add(StringVector *vector, const char *string, size_t length)
   if (length > INT_MAX) return -1; /* If the length is greater printf fails! */
   if (vector->count == vector->limit)
   {
-    data = realloc(vector->data, vector->limit + 32);
+    data = realloc(vector->data, (vector->limit += 32) * sizeof(*data));
     if (!data)
     {
       vector->limit -= 32;
@@ -74,7 +74,7 @@ int GetRow(const char *name, size_t length)
 int *Cell(unsigned column, unsigned row)
 {
   if (!table || column >= columns.count || row >= rows.count) return NULL;
-  return table + column + (size_t)columns.count * row;
+  return table + (column + (size_t)columns.count * row);
 }
 
 void PrintTable(void)

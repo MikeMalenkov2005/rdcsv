@@ -36,7 +36,8 @@ int ParseCSV(const char *csv)
   }
   while (csv[i++])
   {
-    if (AddRow(csv + i, strcspn(csv + i, ",\n")) < 0) return 0;
+    len = strcspn(csv + i, ",\n");
+    if (csv[i + len] == ',' && AddRow(csv + i, len) < 0) return 0;
     i += strcspn(csv + i, "\n");
   }
   if (!InitTable()) return 0;
@@ -50,6 +51,7 @@ int ParseCSV(const char *csv)
       cell = Cell(column++, row);
       if (csv[++i] == '=') AddFormula(csv + i, cell);
       else sscanf(csv + i, "%d", cell);
+      i += strcspn(csv + i, ",\n");
     }
     ++row;
   }
