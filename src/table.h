@@ -9,6 +9,9 @@ int GetColumn(const char *name, size_t length);
 int AddRow(const char *name, size_t length);
 int GetRow(const char *name, size_t length);
 
+unsigned GetWidth(void);
+unsigned GetHeight(void);
+
 int *Cell(unsigned column, unsigned row);
 
 void PrintTable(void);

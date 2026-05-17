@@ -53,7 +53,16 @@ static int _Get(StringVector *vector, const char *string, size_t length)
 
 int AddColumn(const char *name, size_t length)
 {
-  return _Add(&columns, name, length);
+  /* No other characters are allowed in a column name! */
+  static const char *const allowed =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz_";
+  size_t len = strspn(name, "\f\r\v\t ");
+  name += len;
+  length -= len;
+  len = strspn(name, allowed);
+  if (len + strspn(name + len, "\f\r\v\t ") != length) return -1;
+  return _Add(&columns, name, len);
 }
 
 int GetColumn(const char *name, size_t length)
@@ -63,12 +72,25 @@ int GetColumn(const char *name, size_t length)
 
 int AddRow(const char *name, size_t length)
 {
-  return _Add(&rows, name, length);
+  size_t len = strspn(name, "0123456789");
+  if (!len || (len > 1 && *name == '0')) return -1;
+  if (len + strspn(name + len, "\f\r\v\t ") != length) return -1;
+  return _Add(&rows, name, len);
 }
 
 int GetRow(const char *name, size_t length)
 {
   return _Get(&rows, name, length);
+}
+
+unsigned GetWidth(void)
+{
+  return columns.count;
+}
+
+unsigned GetHeight(void)
+{
+  return rows.count;
 }
 
 int *Cell(unsigned column, unsigned row)

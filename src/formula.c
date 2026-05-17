@@ -35,11 +35,11 @@ static int *_GetCell(const char *id, size_t length)
   return Cell(GetColumn(id, i), GetRow(id + i, length - i));
 }
 
-void AddFormula(const char *eq, int *cell)
+int AddFormula(const char *eq, int *cell)
 {
   Formula *formula;
   size_t len = 0, i = 1;
-  if (!(formula = malloc(sizeof(*formula)))) return;
+  if (!(formula = malloc(sizeof(*formula)))) return 0;
   formula->next = NULL;
   formula->cell = cell;
   formula->flags = F_LHS | F_RHS;
@@ -49,7 +49,7 @@ void AddFormula(const char *eq, int *cell)
     if (!(formula->lhs.cell = _GetCell(eq + i, len)))
     {
       free(formula);
-      return;
+      return 0;
     }
     formula->flags &= ~F_LHS;
   }
@@ -58,7 +58,7 @@ void AddFormula(const char *eq, int *cell)
   if (eq[i] != '+' && eq[i] != '-' && eq[i] != '*' && eq[i] != '/')
   {
     free(formula);
-    return;
+    return 0;
   }
   formula->op = eq[i++];
   if (eq[i] != '-' && eq[i] != '+' && !isdigit(eq[i]))
@@ -67,13 +67,14 @@ void AddFormula(const char *eq, int *cell)
     if (!(formula->rhs.cell = _GetCell(eq + i, len)))
     {
       free(formula);
-      return;
+      return 0;
     }
     formula->flags &= ~F_RHS;
   }
   else sscanf(eq + i, "%i", &formula->rhs.value);
   if (!first) first = last = formula;
   else last = last->next = formula;
+  return 1;
 }
 
 static int _IsResolved(int *cell)
