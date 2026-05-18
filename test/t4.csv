@@ -1,0 +1,9 @@
+
+# This table has duplicate column names
+
+ , A, A
+1, 1, 1
+2, 2, 2
+
+# This table results in an error
+

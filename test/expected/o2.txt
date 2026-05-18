@@ -1,0 +1,2 @@
+ERROR: Division by zero in column #1 on row #1!
+ERROR: Failed to resolve formulas!

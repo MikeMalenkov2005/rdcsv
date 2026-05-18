@@ -1,0 +1,13 @@
+
+# This is an example table
+
+  , A, B            , Cell  # It can have comments
+1 , 1, 0            , 1
+
+# Comments and empty lines are ignored
+
+2 , 2, = A1 + Cell30, 0
+30, 0, = B1 + A1    , 5
+
+# This table is valid
+

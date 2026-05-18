@@ -1,0 +1,9 @@
+
+# This table is testing division by zero
+
+ , A , B
+1, 10, 0
+2, 0 , =A1/B1
+
+# This table results in an error
+

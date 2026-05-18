@@ -1,0 +1,9 @@
+
+# Here formulas form a cycle and can not be resolved
+
+ , A     , B
+1, 1     , 2
+2, =A1+B2, =A2+B1
+
+# This table results in an error
+
