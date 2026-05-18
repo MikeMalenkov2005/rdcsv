@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#define F_LHS 1
-#define F_RHS 2
+#define LHS_COMPUTED_FLAG 1
+#define RHS_COMPUTED_FLAG 2
 
 typedef union _Argument
 {
@@ -47,21 +47,21 @@ int AddFormula(const char *eq, int *cell)
   if (!(formula = malloc(sizeof(*formula)))) return 0;
   formula->next = NULL;
   formula->cell = cell;
-  formula->flags = F_LHS | F_RHS;
+  formula->flags = LHS_COMPUTED_FLAG | RHS_COMPUTED_FLAG;
   i += strspn(eq + i, "\f\r\v\t ");
   if (eq[i] != '-' && eq[i] != '+' && !isdigit(eq[i]))
   {
-    len = strcspn(eq + i, "+-*/,#\n");
+    len = strcspn(eq + i, "+-*/%,#\n");
     if (!(formula->lhs.cell = _GetCell(eq + i, len)))
     {
       free(formula);
       return 0;
     }
-    formula->flags &= ~F_LHS;
+    formula->flags &= ~LHS_COMPUTED_FLAG;
   }
   else sscanf(eq + i, "%i%zn", &formula->lhs.value, &len);
   i += strspn(eq + i + len, "\f\r\v\t ") + len;
-  if (eq[i] != '+' && eq[i] != '-' && eq[i] != '*' && eq[i] != '/')
+  if (!eq[i] || !strchr("+-*/%", eq[i]))
   {
     free(formula);
     return 0;
@@ -77,7 +77,7 @@ int AddFormula(const char *eq, int *cell)
       free(formula);
       return 0;
     }
-    formula->flags &= ~F_RHS;
+    formula->flags &= ~RHS_COMPUTED_FLAG;
   }
   else sscanf(eq + i, "%i%zn", &formula->rhs.value, &len);
   i += strspn(eq + i + len, "\f\r\v\t ") + len;
@@ -117,17 +117,17 @@ static int _ResolveOne(void)
     return 1;
   }
   next = first->next;
-  if (!(first->flags & F_LHS) && _IsResolved(first->lhs.cell))
+  if (!(first->flags & LHS_COMPUTED_FLAG) && _IsResolved(first->lhs.cell))
   {
     first->lhs.value = *first->lhs.cell;
-    first->flags |= F_LHS;
+    first->flags |= LHS_COMPUTED_FLAG;
   }
-  if (!(first->flags & F_RHS) && _IsResolved(first->rhs.cell))
+  if (!(first->flags & RHS_COMPUTED_FLAG) && _IsResolved(first->rhs.cell))
   {
     first->rhs.value = *first->rhs.cell;
-    first->flags |= F_RHS;
+    first->flags |= RHS_COMPUTED_FLAG;
   }
-  if ((first->flags & (F_LHS | F_RHS)) == (F_LHS | F_RHS))
+  if ((first->flags & LHS_COMPUTED_FLAG) && (first->flags & RHS_COMPUTED_FLAG))
   {
     switch (first->op)
     {
@@ -149,6 +149,14 @@ static int _ResolveOne(void)
       }
       *first->cell = first->lhs.value / first->rhs.value;
       break;
+    case '%':
+      if (!first->rhs.value)
+      {
+        fprintf(stderr, "ERROR: Division by zero in column #%d on row #%d!\n",
+            GetCellColumn(first->cell), GetCellRow(first->cell));
+        return -1;
+      }
+      *first->cell = first->lhs.value % first->rhs.value;
     }
     free(first);
   }
@@ -176,7 +184,10 @@ int ResolveFormulas(void)
   }
   if (index)
   {
-    fprintf(stderr, "ERROR: Formulas form a cycle and can not be resolved!\n");
+    fprintf(stderr,
+        "ERROR: Formulas form a cycle and can not be resolved!\n"
+        "       First unresolved formula in column #%u on row #%u\n",
+        GetCellColumn(first->cell), GetCellRow(first->cell));
     while (first)
     {
       last = first->next;
