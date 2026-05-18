@@ -21,10 +21,22 @@ static int *table = NULL;
 static StringVector rows = { 0 };
 static StringVector columns = { 0 };
 
+static int _Get(StringVector *vector, const char *string, size_t length)
+{
+  unsigned i = vector->count;
+  while (i--)
+  {
+    if (vector->data[i].size == length &&
+        !strncmp(vector->data[i].data, string, length)) return i;
+  }
+  return -1;
+}
+
 static int _Add(StringVector *vector, const char *string, size_t length)
 {
   String *data;
   if (length > INT_MAX) return -1; /* If the length is greater printf fails! */
+  if (_Get(vector, string, length) >= 0) return -1; /* Prevent duplicates */
   if (vector->count == vector->limit)
   {
     data = realloc(vector->data, (vector->limit += 32) * sizeof(*data));
@@ -38,17 +50,6 @@ static int _Add(StringVector *vector, const char *string, size_t length)
   vector->data[vector->count].data = string;
   vector->data[vector->count].size = length;
   return vector->count++;
-}
-
-static int _Get(StringVector *vector, const char *string, size_t length)
-{
-  unsigned i = vector->count;
-  while (i--)
-  {
-    if (vector->data[i].size == length &&
-        !strncmp(vector->data[i].data, string, length)) return i;
-  }
-  return -1;
 }
 
 int AddColumn(const char *name, size_t length)
