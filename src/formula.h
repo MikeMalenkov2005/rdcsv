@@ -3,7 +3,7 @@
 
 int AddFormula(const char *eq, int *cell);
 
-void ResolveFormulas(void);
+int ResolveFormulas(void);
 
 #endif
 

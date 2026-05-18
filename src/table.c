@@ -100,6 +100,20 @@ int *Cell(unsigned column, unsigned row)
   return table + (column + (size_t)columns.count * row);
 }
 
+int GetCellColumn(int *cell)
+{
+  unsigned index = cell - table;
+  if (index >= columns.count * rows.count) return -1;
+  return index % columns.count;
+}
+
+int GetCellRow(int *cell)
+{
+  unsigned index = cell - table;
+  if (index >= columns.count * rows.count) return -1;
+  return index / columns.count;
+}
+
 void PrintTable(void)
 {
   unsigned i, j;

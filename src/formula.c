@@ -26,13 +26,18 @@ typedef struct _Formula
 
 static Formula *last = NULL;
 static Formula *first = NULL;
+static Formula *new_last = NULL;
+static Formula *new_first = NULL;
 
 static int *_GetCell(const char *id, size_t length)
 {
-  size_t i = length - 1;
-  while (isdigit(id[i - 1])) --i;
-  while (i < length - 1 && id[i] == '0') ++i;
-  return Cell(GetColumn(id, i), GetRow(id + i, length - i));
+  static const char *const allowed =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz_";
+  size_t i = strspn(id, allowed);
+  size_t len = strspn(id + i, "0123456789");
+  if (strspn(id + i + len, "\f\r\v\t ") + i + len != length) return NULL;
+  return Cell(GetColumn(id, i), GetRow(id + i, len));
 }
 
 int AddFormula(const char *eq, int *cell)
@@ -43,9 +48,10 @@ int AddFormula(const char *eq, int *cell)
   formula->next = NULL;
   formula->cell = cell;
   formula->flags = F_LHS | F_RHS;
+  i += strspn(eq + i, "\f\r\v\t ");
   if (eq[i] != '-' && eq[i] != '+' && !isdigit(eq[i]))
   {
-    len = strcspn(eq + i, "+-*/,\n");
+    len = strcspn(eq + i, "+-*/,#\n");
     if (!(formula->lhs.cell = _GetCell(eq + i, len)))
     {
       free(formula);
@@ -54,16 +60,18 @@ int AddFormula(const char *eq, int *cell)
     formula->flags &= ~F_LHS;
   }
   else sscanf(eq + i, "%i%zn", &formula->lhs.value, &len);
-  i += len;
+  i += strspn(eq + i + len, "\f\r\v\t ") + len;
   if (eq[i] != '+' && eq[i] != '-' && eq[i] != '*' && eq[i] != '/')
   {
     free(formula);
     return 0;
   }
+  len = 0;
   formula->op = eq[i++];
+  i += strspn(eq + i, "\f\r\v\t ");
   if (eq[i] != '-' && eq[i] != '+' && !isdigit(eq[i]))
   {
-    len = strcspn(eq + i, ",\n");
+    len = strcspn(eq + i, ",#\n");
     if (!(formula->rhs.cell = _GetCell(eq + i, len)))
     {
       free(formula);
@@ -71,7 +79,13 @@ int AddFormula(const char *eq, int *cell)
     }
     formula->flags &= ~F_RHS;
   }
-  else sscanf(eq + i, "%i", &formula->rhs.value);
+  else sscanf(eq + i, "%i%zn", &formula->rhs.value, &len);
+  i += strspn(eq + i + len, "\f\r\v\t ") + len;
+  if (eq[i] != ',' && eq[i] != '#' && eq[i] != '\n')
+  {
+    free(formula);
+    return 0;
+  }
   if (!first) first = last = formula;
   else last = last->next = formula;
   return 1;
@@ -84,13 +98,15 @@ static int _IsResolved(int *cell)
   {
     if (formula->cell == cell) return 0;
   }
+  for (formula = new_first; formula; formula = formula->next)
+  {
+    if (formula->cell == cell) return 0;
+  }
   return 1;
 }
 
-static int _ResolveOne(int force)
+static int _ResolveOne(void)
 {
-  static Formula *new_first = NULL;
-  static Formula *new_last = NULL;
   Formula *next;
   if (!first)
   {
@@ -98,15 +114,15 @@ static int _ResolveOne(int force)
     last = new_last;
     new_first = NULL;
     new_last = NULL;
-    return 0;
+    return 1;
   }
   next = first->next;
-  if (!(first->flags & F_LHS) && (force || _IsResolved(first->lhs.cell)))
+  if (!(first->flags & F_LHS) && _IsResolved(first->lhs.cell))
   {
     first->lhs.value = *first->lhs.cell;
     first->flags |= F_LHS;
   }
-  if (!(first->flags & F_RHS) && (force || _IsResolved(first->rhs.cell)))
+  if (!(first->flags & F_RHS) && _IsResolved(first->rhs.cell))
   {
     first->rhs.value = *first->rhs.cell;
     first->flags |= F_RHS;
@@ -125,32 +141,50 @@ static int _ResolveOne(int force)
       *first->cell = first->lhs.value * first->rhs.value;
       break;
     case '/':
+      if (!first->rhs.value)
+      {
+        fprintf(stderr, "ERROR: Division by zero in column #%d on row #%d!\n",
+            GetCellColumn(first->cell), GetCellRow(first->cell));
+        return -1;
+      }
       *first->cell = first->lhs.value / first->rhs.value;
       break;
     }
-    memset(first, 0, sizeof(*first));
     free(first);
   }
   else
   {
     first->next = NULL;
     if (!new_first) new_first = new_last = first;
-    else new_last = last->next = first;
+    else new_last = new_last->next = first;
   }
   first = next;
-  return 1;
+  return 0;
 }
 
-void ResolveFormulas(void)
+int ResolveFormulas(void)
 {
+  int result;
   unsigned index = 0;
   unsigned count = -1;
   if (first) while (count != index)
   {
     count = index;
     index = 0;
-    while (_ResolveOne(1)) ++index;
+    while (!(result = _ResolveOne())) ++index;
+    if (result < 0) return 0;
   }
-  if (index) while (_ResolveOne(1));
+  if (index)
+  {
+    fprintf(stderr, "ERROR: Formulas form a cycle and can not be resolved!\n");
+    while (first)
+    {
+      last = first->next;
+      free(first);
+      first = last;
+    }
+    return 0;
+  }
+  return 1;
 }
 

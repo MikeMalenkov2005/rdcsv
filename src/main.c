@@ -37,11 +37,18 @@ int main(int argc, char *argv[])
   }
   if (!ParseCSV(csv))
   {
-    FreeTable();
     fprintf(stderr, "ERROR: Failed to parse CSV!\n");
+    FreeTable();
+    free(csv);
     return EXIT_FAILURE;
   }
-  ResolveFormulas();
+  if (!ResolveFormulas())
+  {
+    fprintf(stderr, "ERROR: Failed to resolve formulas!\n");
+    FreeTable();
+    free(csv);
+    return EXIT_FAILURE;
+  }
   PrintTable();
   FreeTable();
   free(csv);

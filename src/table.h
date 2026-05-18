@@ -14,6 +14,9 @@ unsigned GetHeight(void);
 
 int *Cell(unsigned column, unsigned row);
 
+int GetCellColumn(int *cell);
+int GetCellRow(int *cell);
+
 void PrintTable(void);
 
 int InitTable(void);

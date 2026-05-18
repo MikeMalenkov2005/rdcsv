@@ -101,7 +101,7 @@ int ParseCSV(const char *csv)
       else
       {
         /* Parsing cell with integer */
-        if (sscanf(csv + i, "%d%zn", cell, &len) != 1)
+        if (sscanf(csv + i, "%i%zn", cell, &len) != 1)
         {
           fprintf(stderr, "ERROR: Invalid cell in column #%u on row #%u!\n",
               column - 1, row);
