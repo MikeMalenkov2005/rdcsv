@@ -1,2 +1,3 @@
 ERROR: Formulas form a cycle and can not be resolved!
+       First unresolved formula in column #0 on row #1
 ERROR: Failed to resolve formulas!

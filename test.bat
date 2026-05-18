@@ -48,7 +48,6 @@ for %%f in (test\t*.csv) do (
             set /a passed+=1
         )
     ) else (
-        echo TEST
         echo Test !N! FAILED: exit code mismatch: got !exit_code!, expected !expected!
         set /a failed+=1
     )

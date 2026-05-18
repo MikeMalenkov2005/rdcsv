@@ -1,0 +1,12 @@
+
+# Ensure that formulas can have whitespaces and all operations work
+
+  ,A, B
+1, 2, = 2 + 2 #
+2, =A1+0, = A2 -  2
+3, =A2+0, = 2  * A3
+4, =A3+0, = A4 / A4
+5, =A4+0, = A5 % A5 # Added a modulo operator
+6, =A5+0, = A6 + A6
+
+# This table is valid
