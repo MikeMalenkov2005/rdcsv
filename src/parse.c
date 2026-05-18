@@ -29,7 +29,7 @@ int ParseCSV(const char *csv)
     len = strcspn(csv + ++i, ",#\n");
     if (AddColumn(csv + i, len) < 0)
     {
-      fprintf(stderr, "ERROR: Table #%u is invalid!\n", GetWidth());
+      fprintf(stderr, "ERROR: Column #%u name is invalid!\n", GetWidth());
       return 0;
     }
     i += strcspn(csv + i, ",\n");
@@ -47,7 +47,7 @@ int ParseCSV(const char *csv)
     len = strcspn(csv + i, ",#\n");
     if (len && AddRow(csv + i, len) < 0)
     {
-      fprintf(stderr, "ERROR: Row #%u is invalid!\n", GetHeight());
+      fprintf(stderr, "ERROR: Row #%u number is invalid!\n", GetHeight());
       return 0;
     }
     i += strcspn(csv + i, "\n");
