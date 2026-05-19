@@ -1,0 +1,10 @@
+
+# This table tests for invalid characters in line numbers
+
+ , A, B, C
+A, 1, 2, 3
+B, 2, 3, 4
+C, 3, 4, 5
+
+# This table results in an error
+

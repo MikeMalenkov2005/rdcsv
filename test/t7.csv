@@ -1,0 +1,9 @@
+
+# This table tests incorrent symbols in column headers
+
+ , A1, B2, C3
+1, 10, 20, 30
+2, 11, 22, 33
+
+# This table results in an error
+

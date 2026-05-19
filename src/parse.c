@@ -83,7 +83,7 @@ int ParseCSV(const char *csv)
       i += strspn(csv + i + 1, "\f\r\v\t ") + 1;
       if (csv[i] == ',' || csv[i] == '#' || csv[i] == '\n')
       {
-        fprintf(stderr, "ERROR Empty cell in column #%u on row #%u!\n",
+        fprintf(stderr, "ERROR: Empty cell in column #%u on row #%u!\n",
             column - 1, row);
         return 0;
       }

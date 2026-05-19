@@ -1,5 +1,5 @@
 
-# This is an example table
+# This is an example table based on the one provided in the task
 
   , A, B            , Cell  # It can have comments
 1 , 1, 0            , 1

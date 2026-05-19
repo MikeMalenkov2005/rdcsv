@@ -1,0 +1,11 @@
+
+# This table checks the modulo operation with positive and negative arguments
+
+ , Mod
+1, =  10 %  3
+2, = -10 %  3
+3, =  10 % -3
+4, = -10 % -3
+
+# This table is valid
+
