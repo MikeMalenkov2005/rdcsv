@@ -75,7 +75,7 @@ int GetColumn(const char *name, size_t length)
 int AddRow(const char *name, size_t length)
 {
   size_t len = strspn(name, "0123456789");
-  if (!len || (len > 1 && *name == '0')) return -1;
+  if (!len || *name == '0') return -1;
   if (len + strspn(name + len, "\f\r\v\t ") != length) return -1;
   return _Add(&rows, name, len);
 }

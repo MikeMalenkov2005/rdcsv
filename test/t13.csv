@@ -1,0 +1,9 @@
+
+# This table tests invalid cell addresses
+
+ ,  A,  B
+1,  1,  2
+2,  3,  =A1+C2
+
+# This table results in an error
+
