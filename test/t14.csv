@@ -1,0 +1,10 @@
+
+# This table tests for invalid row length
+
+ , A, B, C
+1, 1, 1, 1
+2, 2, 2
+3, 3
+
+# This table results in an error
+
